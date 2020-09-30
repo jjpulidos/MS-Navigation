@@ -27,7 +27,6 @@ class Item(BaseModel):
     class_id: str
     tags: str
     type: str
-    text: str
 
 
 def item2doc(item: Item):
@@ -132,4 +131,7 @@ def search_doc_type(type: str):
     return response
 
 
-
+@app.delete("/deleteDoc")
+def delete_doc(id: str):
+    res = es.delete(index="dev_westudy", id=id)
+    return res['result']
