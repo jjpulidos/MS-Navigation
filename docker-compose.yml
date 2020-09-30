@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  flaskapp:
+    build: .
+    container_name: flask-app
+    network_mode: host
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    environment:
+      - SERVER_NAME=107.21.22.190
+    restart: always
+    network_mode: host
