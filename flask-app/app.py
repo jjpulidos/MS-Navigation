@@ -1,26 +1,72 @@
 from datetime import datetime
-from flask import Flask, render_template, url_for, redirect, request
-from flask_restplus import Api, Resource, fields
+from bs4 import BeautifulSoup
+import requests
+from typing import Optional
+from fastapi import FastAPI
+from pydantic import BaseModel
+
 from elasticsearch import Elasticsearch
 
-app = Flask(__name__)
+app = FastAPI()
 es = Elasticsearch("https://search-we-study-nckckstkdcnxiwgokq4vteczgq.us-east-1.es.amazonaws.com")
 
-@app.route("/insertDoc", methods=['PUT'])
-def insert_doc():
-    data = request.json
-    res = es.index(index="dev_westudy", id=data.get("class"), body=data)
+blacklist = [
+    '[document]',
+    'noscript',
+    'header',
+    'html',
+    'meta',
+    'head',
+    'input',
+    'script',
+    # there may be more elements you don't want, such as "style", etc.
+]
+
+
+class Item(BaseModel):
+    class_id: str
+    tags: str
+    type: str
+    text: str
+
+
+def item2doc(item: Item):
+    text_output = ""
+    res = requests.get(item.class_id)
+    html_page = res.content
+    soup = BeautifulSoup(html_page, 'html.parser')
+    text = soup.find_all(text=True)
+    for t in text:
+        if t.parent.name not in blacklist:
+            text_output += '{} '.format(t)
+
+    return {
+        "class": item.class_id,
+        "tags": item.tags,
+        "type": item.type,
+        "text": text_output
+    }
+
+
+@app.get("/health")
+def health():
+    return es.info()
+
+
+@app.put("/insertDoc")
+def insert_doc(item: Item):
+    res = es.index(index="dev_westudy", id=item.class_id, body=item2doc(item))
     return res['result']
 
 
-@app.route("/listDocs", methods=['GET'])
+@app.get("/listDocs")
 def list_docs():
     res = es.search(index="dev_westudy", body={"query": {"match_all": {}}})
     response = {"data": [data.get("_source") for data in res['hits']['hits']]}
     return response
 
 
-@app.route("/listDocs/tags", methods=['GET'])
+@app.get("/listDocs/tags")
 def list_doc_tags():
     res = es.search(index="dev_westudy", body={"query": {"match_all": {}}})
     tags = {}
@@ -33,7 +79,7 @@ def list_doc_tags():
     return tags
 
 
-@app.route("/listDocs/type")
+@app.get("/listDocs/type")
 def list_doc_type():
     res = es.search(index="dev_westudy", body={"query": {"match_all": {}}})
     type = {}
@@ -46,13 +92,26 @@ def list_doc_type():
     return type
 
 
-@app.route("/searchDocs/text", methods=["POST"])
-def search_doc_text():
-    data = request.json
+@app.post("/searchDocs/text")
+def search_doc_text(text: str):
     res = es.search(index="dev_westudy", body={
         "query": {
             "match": {
-                "text": data.get("text")
+                "text": text
+            }
+        }
+    })
+
+    response = {"data": [data.get("_source") for data in res['hits']['hits']]}
+    return response
+
+
+@app.post("/searchDocs/tags")
+def search_doc_tags(tags: str):
+    res = es.search(index="dev_westudy", body={
+        "query": {
+            "match": {
+                "tags": tags
             }
         }
     })
@@ -60,13 +119,12 @@ def search_doc_text():
     return response
 
 
-@app.route("/searchDocs/tags", methods=["POST"])
-def search_doc_tags():
-    data = request.json
+@app.post("/searchDocs/type")
+def search_doc_type(type: str):
     res = es.search(index="dev_westudy", body={
         "query": {
             "match": {
-                "tags": data.get("tags")
+                "type": type
             }
         }
     })
@@ -74,31 +132,4 @@ def search_doc_tags():
     return response
 
 
-@app.route("/searchDocs/type", methods=["POST"])
-def search_doc_type():
-    data = request.json
-    res = es.search(index="dev_westudy", body={
-        "query": {
-            "match": {
-                "type": data.get("type")
-            }
-        }
-    })
-    response = {"data": [data.get("_source") for data in res['hits']['hits']]}
-    return response
 
-
-@app.route("/health")
-def health():
-    if es:
-        return "ES esta vivo"
-
-if __name__ == '__main__':
-    app.run(host="127.0.0.1", port=8001, debug=True)
-
-
-# res = es.get(index="dev_westudy")
-# print(res['_source'])
-
-# es.indices.refresh(index="test-index")
-#
