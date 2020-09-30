@@ -3,12 +3,28 @@ from bs4 import BeautifulSoup
 import requests
 from typing import Optional
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from elasticsearch import Elasticsearch
 
 app = FastAPI()
 es = Elasticsearch("https://search-we-study-nckckstkdcnxiwgokq4vteczgq.us-east-1.es.amazonaws.com")
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 blacklist = [
     '[document]',
