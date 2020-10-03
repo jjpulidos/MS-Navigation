@@ -147,7 +147,13 @@ def search_doc_type(type: str):
     return response
 
 
-@app.delete("/deleteDoc")
+@app.post("/deleteDoc")
 def delete_doc(id: str):
-    res = es.delete(index="dev_westudy", id=id)
+    res = es.delete_by_query(index="dev_westudy", body={
+        "query": {
+            "match": {
+                "class_id": id
+            }
+        }
+    })
     return res['result']
