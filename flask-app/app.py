@@ -40,9 +40,9 @@ blacklist = [
 
 
 class Item(BaseModel):
-    class_id: str
-    tags: str
-    type: str
+    class_id: Optional[str] = None
+    tags: Optional[str] = None
+    type: Optional[str] = None
 
 
 def item2doc(item: Item):
@@ -108,11 +108,11 @@ def list_doc_type():
 
 
 @app.post("/searchDocs/text")
-def search_doc_text(text: str):
+def search_doc_text(item: Item):
     res = es.search(index="dev_westudy", body={
         "query": {
             "match": {
-                "text": text
+                "text": item.text
             }
         }
     })
@@ -122,11 +122,11 @@ def search_doc_text(text: str):
 
 
 @app.post("/searchDocs/tags")
-def search_doc_tags(tags: str):
+def search_doc_tags(item: Item):
     res = es.search(index="dev_westudy", body={
         "query": {
             "match": {
-                "tags": tags
+                "tags": item.tags
             }
         }
     })
@@ -135,11 +135,11 @@ def search_doc_tags(tags: str):
 
 
 @app.post("/searchDocs/type")
-def search_doc_type(type: str):
+def search_doc_type(item: Item):
     res = es.search(index="dev_westudy", body={
         "query": {
             "match": {
-                "type": type
+                "type": item.type
             }
         }
     })
@@ -148,11 +148,11 @@ def search_doc_type(type: str):
 
 
 @app.post("/deleteDoc")
-def delete_doc(id: str):
+def delete_doc(item: Item):
     res = es.delete_by_query(index="dev_westudy", body={
         "query": {
             "match": {
-                "class": id
+                "class_id": item.class_id
             }
         }
     })
