@@ -43,6 +43,7 @@ class Item(BaseModel):
     class_id: Optional[str] = None
     tags: Optional[str] = None
     type: Optional[str] = None
+    text: Optional[str] = None
 
 
 def item2doc(item: Item):
