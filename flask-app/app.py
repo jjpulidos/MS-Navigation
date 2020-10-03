@@ -152,7 +152,7 @@ def delete_doc(id: str):
     res = es.delete_by_query(index="dev_westudy", body={
         "query": {
             "match": {
-                "class_id": id
+                "class": id
             }
         }
     })
