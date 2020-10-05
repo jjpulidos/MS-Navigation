@@ -157,4 +157,4 @@ def delete_doc(item: Item):
             }
         }
     })
-    return res['result']
+    return res['deleted']
