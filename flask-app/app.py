@@ -168,4 +168,4 @@ def delete_doc(item: Item):
             }
         }
     })
-    return res['deleted']
+    return res
