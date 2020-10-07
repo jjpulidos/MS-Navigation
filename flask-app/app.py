@@ -85,27 +85,38 @@ def list_docs():
 @app.get("/listDocs/tags")
 def list_doc_tags():
     res = es.search(index="dev_westudy", body={"query": {"match_all": {}}})
-    tags = {}
+    response = {
+        "data": []
+    }
     for hit in res['hits']['hits']:
         hit = hit.get("_source")
-        if hit.get("tags") not in tags.keys():
-            tags[hit.get("tags")] = [hit]
+        if hit.get("tags") not in [elem.get("name") for elem in response.get("data")]:
+            response.get("data").append({
+                "name": hit.get("tags"),
+                "docs": [hit]
+            })
         else:
-            tags[hit.get("tags")].append(hit)
-    return tags
+            response.get("data")[[elem.get("name") for elem in response.get("data")].index(hit.get("tags"))].get("docs").append(hit)
+    return response
 
 
 @app.get("/listDocs/type")
 def list_doc_type():
     res = es.search(index="dev_westudy", body={"query": {"match_all": {}}})
-    type = {}
+    response = {
+        "data": []
+    }
     for hit in res['hits']['hits']:
         hit = hit.get("_source")
-        if hit.get("type") not in type.keys():
-            type[hit.get("type")] = [hit]
+        if hit.get("type") not in [elem.get("name") for elem in response.get("data")]:
+            response.get("data").append({
+                "name": hit.get("type"),
+                "docs": [hit]
+            })
         else:
-            type[hit.get("type")].append(hit)
-    return type
+            response.get("data")[[elem.get("name") for elem in response.get("data")].index(hit.get("type"))].get(
+                "docs").append(hit)
+    return response
 
 
 @app.post("/searchDocs/text")
