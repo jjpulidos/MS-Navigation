@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import uvicorn
 
 from elasticsearch import Elasticsearch
 
@@ -161,11 +162,20 @@ def search_doc_type(item: Item):
 
 @app.post("/deleteDoc")
 def delete_doc(item: Item):
-    res = es.delete_by_query(index="dev_westudy", body={
+    query = {
         "query": {
             "match": {
                 "class": item.class_id
             }
         }
-    })
+    }
+
+    res = es.search(index="dev_westudy", body=query)
+    print(res)
+    res = es.delete_by_query(index="dev_westudy", body=query)
+
     return res
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,6 +1,6 @@
 venv
 .idea
-flask-app/__pycache__/
+app/__pycache__/
 *__pycache__
 **/__pycache__/
 .pytest_cache/
